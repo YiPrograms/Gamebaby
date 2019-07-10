@@ -33,6 +33,8 @@ double key1i = 0;
 double key2i = 0;
 bool key1n=false;
 bool key2n=false;
+bool key1d=false;
+bool key2d=false;
 char operation = ' ';
 /*long Time = 0;
 long millicount = 0;
@@ -55,7 +57,7 @@ char button[4][4] = {
   { '7', '8', '9', '/' },
   { '4', '5', '6', 'X' },
   { '1', '2', '3', '-' },
-  { 'C', '0', '=', '+' }
+  { 'C', '0', '.', '+' }
 };
 
 void draw()
@@ -75,7 +77,8 @@ void draw()
   tft.drawRoundRect(row1x + boxsize * 2, extray, boxsize, boxsize, 8, ILI9341_WHITE);
   tft.drawRoundRect(row1x + boxsize * 2, extray + boxsize, boxsize, boxsize, 8, ILI9341_WHITE);
   tft.drawRoundRect(row1x + boxsize * 2, extray + boxsize * 2, boxsize, boxsize, 8, ILI9341_WHITE);
-  tft.drawRoundRect(row1x + boxsize * 2, extray + boxsize * 3, boxsize, boxsize, 8, ILI9341_GREEN);
+  tft.drawRoundRect(row1x + boxsize * 2, extray + boxsize * 3, boxsize, boxsize, 8, ILI9341_YELLOW);
+  tft.drawRoundRect(row1x + boxsize * 4, extray, 320-(row1x + boxsize * 4)-5, boxsize*4, 8, ILI9341_GREEN);
 
   for (int j = 0; j < 4; j++) {
     for (int i = 0; i < 4; i++) {
@@ -85,7 +88,12 @@ void draw()
       tft.println(button[j][i]);
     }
   }
+  tft.setCursor(35 + (boxsize * 4), extray + 12 + (boxsize * 1));
+  tft.setTextSize(10);
+  tft.setTextColor(ILI9341_WHITE);
+  tft.println('=');
   tft.drawRoundRect(0, 0, 320, 48, 8, ILI9341_ORANGE);
+  tft.setTextSize(3);
   tft.setCursor(4,12);
 }
 
@@ -104,6 +112,10 @@ void setup()
   tft.setCursor(4, 12);
 }
 
+double str2dble(String & str) {
+  return atof( str.c_str() );
+}
+
 void loop()
 {
   if (ts.touched() && !beentouched)
@@ -111,6 +123,20 @@ void loop()
     if(equal)
     {
       equal = false;
+      key1 = "";
+      key2 = "";
+      answer = 0;
+
+      key1i = 0;
+      key2i = 0;
+
+      key1n=false;
+      key2n=false;
+      
+      key1d=false;
+      key2d=false;
+
+      operation = ' ';
       draw();
     }
     
@@ -143,6 +169,21 @@ void loop()
         tft.print(lastchar);
         Serial.println(key2);
       }
+    }
+    if (lastchar=='.') {
+        if (operation == ' ') {
+            if (key1!="" && !key1d) {
+                key1d==true;
+                tft.print('.');
+                key1+='.';
+            }
+        } else {
+            if (key2!="" && !key2d) {
+                key2d==true;
+                tft.print('.');
+                key2+='.';
+            }
+        }
     }
     if (lastchar=='-' && key1=="" && !key1n) {
         tft.print('-');
@@ -183,6 +224,9 @@ void loop()
 
       key1n=false;
       key2n=false;
+      
+      key1d=false;
+      key2d=false;
 
       operation = ' ';
       draw();
@@ -215,8 +259,8 @@ void loop()
         {
           key1i = 0;
           key2i = 0;
-          key1i = key1.toInt();
-          key2i = key2.toInt();
+          key1i = str2dble(key1);
+          key2i = str2dble(key2);
 
           if (key1n) key1i*=-1;
           if (key2n) key2i*=-1;
@@ -354,8 +398,8 @@ char idbutton()
     {
       tft.drawRoundRect(row1x + boxsize * 2, extray + boxsize * 3, boxsize, boxsize, 8, ILI9341_BLUE);
       delay(100);
-      tft.drawRoundRect(row1x + boxsize * 2, extray + boxsize * 3, boxsize, boxsize, 8, ILI9341_GREEN);
-      return '=';
+      tft.drawRoundRect(row1x + boxsize * 2, extray + boxsize * 3, boxsize, boxsize, 8, ILI9341_YELLOW);
+      return '.';
     }
 
   }
@@ -395,6 +439,19 @@ char idbutton()
       delay(100);
       tft.drawRoundRect(row1x + boxsize * 3, extray + boxsize * 3, boxsize, boxsize, 8, ILI9341_BLUE);
       return '+';
+    }
+  }
+
+  if (x>=(boxsize * 4))
+  {
+    //    Serial.println("Row 4  ");
+    //+
+    if (((extray + (boxsize * 4)) >= y) && (y >= extray))
+    {
+      tft.drawRoundRect(row1x + boxsize * 4, extray, 320-(row1x + boxsize * 4)-5, boxsize*4, 8, ILI9341_BLUE);
+      delay(100);
+      tft.drawRoundRect(row1x + boxsize * 4, extray, 320-(row1x + boxsize * 4)-5, boxsize*4, 8, ILI9341_GREEN);
+      return '=';
     }
   }
 }
