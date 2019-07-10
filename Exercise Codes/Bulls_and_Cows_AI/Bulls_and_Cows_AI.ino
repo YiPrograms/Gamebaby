@@ -5,6 +5,8 @@
 #include <XPT2046_Touchscreen.h>
 #include <string.h>
 #include "buttonCoordinate.h"
+#include <vector>
+using std::vector;
 
 // Calibration data for the raw touch data to the screen coordinates
 #define TS_MINX 361
@@ -54,11 +56,8 @@ struct GameData {
     int count;
 } gameData;
 
-int posss[30250];
-bool poss[30250];
-
 struct AIData {
-    bool possible[10000];
+    vector<bool> possible;
     int guess;
     int A;
     int B;
@@ -117,6 +116,8 @@ void printNumber(int index) {
     tft.print(index);
 }
 
+
+
 // AI mode: AI guess your number
 
 void drawAIScreen() {
@@ -128,7 +129,7 @@ void drawAIScreen() {
     for(int i = 0; i < 4; ++i) {
         drawHorizontalLine(112 + 64 * i - 2);
     }
-    for(int i = 0; i < 5; ++i) {
+    for(int i = 0; i <= 5; ++i) {
         printNumber(i);
     }
     tft.setCursor(192 + 8, 0 + 8);
@@ -136,7 +137,7 @@ void drawAIScreen() {
     // draw guess
     tft.setCursor(8, 8);
     if(AIData.remain > 0) {
-        if(AIData.guess < 1000) tft.print("0");
+        if(AIData.guess < 10000) tft.print("0");
         tft.print(AIData.guess);
     }
     else {
@@ -204,7 +205,7 @@ void PlayerMove() {
                 --AIData.count;
                 drawAIScreen();
             }
-            for(int i = 0; i < 5; ++i) {
+            for(int i = 0; i <= 5; ++i) {
                 if(numButtons[i].isPressed(p.x, p.y)) {
                     if(count == 0) AIData.A = i;
                     else if(count == 1) AIData.B = i;
@@ -302,9 +303,10 @@ void resetAIData() {
     /* TODO 03
      *  your code here
      */
-
+    AIData.possible.clear();
+    
     for(int i=0; i<100000; i++) {
-        AIData.possible[i]=true;     // add into possible list
+        AIData.possible.push_back(true);     // add into possible list
         bool hist[10]={0};
         int target = i;   // example: 1134
         for(int j = 0; j < 5; ++j) {
