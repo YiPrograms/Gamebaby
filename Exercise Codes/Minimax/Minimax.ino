@@ -821,7 +821,7 @@ double minimax(const State& s, int& mX, int& mY, bool redTurn, int depth, int al
             double h;
             State newS = takeStep(s, i, j, redTurn);
             if (depth <= 1 || isEnd(newS)) {
-                h = heuristic(newS);
+                h = heuristic(newS, redTurn);
             } else {
                 int tempMX = -1, tempMY = -1;
                 h = minimax(newS, tempMX, tempMY, !redTurn, depth - 1, alpha, beta);
@@ -853,4 +853,3 @@ double minimax(const State& s, int& mX, int& mY, bool redTurn, int depth, int al
 
     return bestHeu;
 }
-

@@ -8,6 +8,7 @@
 #include <Adafruit_ILI9341.h>
 
 #include "step.h"
+#include "GfxUi.h"
 
 #define BLACK   0x0000
 #define BLUE    0x001F
@@ -20,10 +21,12 @@
 
 
 extern Adafruit_ILI9341 tft;
+GfxUi ui = GfxUi(&tft);
+extern int picid;
 
 using namespace std;
 
-String num_str[9] = {" ", "1", "2", "3", "4", "5", "6", "7", "8"};
+String numstr[9] = {" ", "1", "2", "3", "4", "5", "6", "7", "8"};
 
 struct State {
     int pos[9]; // 1~8, 0 means empty
@@ -100,13 +103,13 @@ int heuristic(State s) {
     int h = 0;
     
     // Default heuristic
-    /*
+    
     for (int i = 0; i < 9; ++i) {
         if (s.pos[i] != goalState.pos[i]) {
             ++h;
         }
     }
-    */
+    
 
     // TODO: Design your own heuristic
     /**** Write your code here ****/
@@ -184,6 +187,18 @@ void drawHorizontalLine(int y) {
     }
 }
 
+void drawLines() {
+    drawVerticalLine(105);
+    drawVerticalLine(175);
+    drawVerticalLine(245);
+    drawVerticalLine(315);
+
+    drawHorizontalLine(25);
+    drawHorizontalLine(95);
+    drawHorizontalLine(165);
+    drawHorizontalLine(235);
+}
+
 char* myToChars(int i) {
     char buffer [50];
     sprintf (buffer, "%3i", i);
@@ -200,7 +215,22 @@ void printNumber(State s, int index) {
     int x = 105 + 20 + (index % 3) * 70;
     int y = 25 + 20 + (index / 3) * 70;
     tft.setCursor(x, y);
-    tft.print(num_str[s.pos[index]]);
+    tft.print(numstr[s.pos[index]]);
+}
+
+void printPicture(State s, int index) { // 70x70
+    int x = 105 + (index % 3) * 70;
+    int y = 25 + (index / 3) * 70;
+    if (s.pos[index]==0) {
+        tft.fillRoundRect(x, y, 70, 70, 0, ILI9341_BLACK);
+        return;
+    }
+    String pth="/";
+    pth+=(char)(picid+'0');
+    pth+="/"+numstr[s.pos[index]]+ ".bmp";
+    drawLines();
+    ui.drawBmp(pth, x, y);
+    drawLines();
 }
 
 void printState(State s) {
@@ -228,7 +258,7 @@ void printState(State s) {
     tft.setTextColor(BLUE);
     tft.setTextSize(6);
     for (int i = 0; i < 9; ++i) {
-        printNumber(s, i);
+        printPicture(s, i);
     }
 
     tft.setTextColor(CYAN);
@@ -268,6 +298,7 @@ unsigned long long getHash(State s) {
     return key;
 }
 
+
 State getState(unsigned long long hash) {
     State s;
     for (int i = 0; i < 9; ++i) {
@@ -294,6 +325,12 @@ State getState(unsigned long long key, int f) {
     s.g = s.f - s.h;
 
     return s;
+}
+
+void updateState(State &s, Step step) {
+    int ind1=step.p1, ind2=step.p2;
+    printPicture(s, ind1);
+    printPicture(s, ind2);
 }
 
 State takeStep(State s, Step step, bool reverse) {
@@ -343,4 +380,3 @@ bool getLegalStep(State s, int index, Step& step) {
 }
 
 #endif
-

@@ -9,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 
+
 #include "util.h"
 #include "state.h"
 #include "myQueue.h"
@@ -67,6 +68,8 @@ vector<Step> steps;
 State initState, currentState;
 int countAStar;
 
+int picid=0;
+
 void getClickedPlace(int& clickedIndex);
 void showAStarResult();
 void drawGiveupButton();
@@ -81,12 +84,14 @@ void drawAStarGameOverScreen(int moves);
 int A_star_search(State state, int cutoff, vector<Step>& steps);
 
 void setup() {
+    SPIFFS.begin();
     pinMode(BL_LED,OUTPUT);
     digitalWrite(BL_LED, HIGH);
     Serial.begin(9600);
     Serial.print("Starting...");
     // randomSeed(millis());
     randomSeed(1);
+    
  
     if (!ts.begin()) {
         Serial.println("Couldn't start touchscreen controller");
@@ -149,13 +154,14 @@ void loop() {
                     int clickedIndex = -1;
                     getClickedPlace(clickedIndex);
                     delay(200);
-
+                    tft.fillRoundRect(10, 150, 95, 30, 0, ILI9341_BLACK);
                     Step step;
                     if (getLegalStep(currentState, clickedIndex, step)) {
                         currentState = takeStep(currentState, step);
-                        printState(currentState);
+                        //printState(currentState);
+                        updateState(currentState, step);
                     } else {
-                        printState(currentState);
+                        //printState(currentState);
                         
                         tft.setTextColor(RED);
                         tft.setTextSize(3);
@@ -178,7 +184,7 @@ void loop() {
                 showAStarResult();
 
                 if (currentState == goalState) {
-                    printState(currentState);
+                    //printState(currentState);
                     delay(500);
                     drawAStarGameOverScreen(currentState.g);
                 }
@@ -213,10 +219,10 @@ void getClickedPlace(int& clickedIndex) {
     for (int i = 0; i < 9; ++i) {
         if (buttons[i].pressed(p.x, p.y)) {
             clickedIndex = i;
-            tft.fillRect(buttons[i].x, buttons[i].y, buttons[i].width, buttons[i].height, RED);
+            /*tft.fillRect(buttons[i].x, buttons[i].y, buttons[i].width, buttons[i].height, RED);
             tft.setTextColor(BLUE);
             tft.setTextSize(6);
-            printNumber(currentState, i);
+            printNumber(currentState, i);*/
             break;
         }
     }
@@ -224,19 +230,22 @@ void getClickedPlace(int& clickedIndex) {
 
 void showAStarResult() {
     for (int i = 0; i < steps.size(); ++i) {
-        printState(currentState);
-        delay(500);
+        //printState(currentState);
+        
 
-        int p1 = steps[i].p1;
-        int p2 = steps[i].p2;
-        tft.fillRect(buttons[p1].x, buttons[p1].y, buttons[p1].width, buttons[p1].height, RED);
-        tft.fillRect(buttons[p2].x, buttons[p2].y, buttons[p2].width, buttons[p2].height, RED);
-        tft.setTextColor(BLUE);
-        tft.setTextSize(6);
-        printNumber(currentState, p1);
-        printNumber(currentState, p2);
-
+        //int p1 = steps[i].p1;
+        //int p2 = steps[i].p2;
+        //tft.fillRect(buttons[p1].x, buttons[p1].y, buttons[p1].width, buttons[p1].height, RED);
+        //tft.fillRect(buttons[p2].x, buttons[p2].y, buttons[p2].width, buttons[p2].height, RED);
+        //tft.setTextColor(BLUE);
+        //tft.setTextSize(6);
+        //printNumber(currentState, p1);
+        //printNumber(currentState, p2);
+    
         currentState = takeStep(currentState, steps[i]);
+        updateState(currentState, steps[i]);
+        drawLines();
+        delay(500);
     }
 }
 
@@ -269,6 +278,7 @@ void gameSetup() {
 }
 
 void resetGame() {
+    picid=random(4);
     do {
         initState = randomStepState(RANDOM_MOVE);
         // initState = randomState();

@@ -47,7 +47,7 @@ char* myToChars_six(int i);
 bool inBoard(int x, int y);
 int countResult(const State& s);
 int availablePlaces(const State& s, bool (&available)[8][8], bool redTurn);
-double heuristic(State& s);
+double heuristic(State& s, bool redTurn);
 bool isEnd(const State& s);
 void showHost(bool host);
 void drawHorizontalLine(int y);
@@ -111,8 +111,95 @@ int countResult(const State& s) {
     return result;
 }
 
+int countDisks(const State& s) {
+    int result = 0;
+    for (int i = 0; i < 8; ++i)
+        for (int j = 0; j < 8; ++j)
+            result += (!s.exist[i][j]) ? 0 : 1;
+    return result;
+}
+
 /// Boss code
-float countResult_weighted(const State& s) {
+int squareWeights(const State& s) {
+    int result=0;
+    int weights[8][8]={
+                          {200, -100, 100,  50,  50, 100, -100,  200,},           
+                          {-100, -200, -50, -50, -50, -50, -200, -100},
+                          {100,  -50, 100,   0,   0, 100,  -50,  100},
+                          {50,  -50,   0,   0,   0,   0,  -50,   50},
+                          {50,  -50,   0,   0,   0,   0,  -50,   50},
+                          {100,  -50, 100,   0,   0, 100,  -50,  100},
+                          {-100, -200, -50, -50, -50, -50, -200, -100},
+                          {200, -100, 100, 50, 50, 100, -100, 200}};
+    
+    if (s.exist[0][0] != 0) {
+        weights[0][1]  = 0;
+        weights[0][2]  = 0;
+        weights[0][3]  = 0;
+        weights[1][0]  = 0;
+        weights[1][1]  = 0;
+        weights[1][2] = 0;
+        weights[1][3] = 0;
+        weights[2][0] = 0;
+        weights[2][1] = 0;
+        weights[2][2] = 0;
+        weights[3][0] = 0;
+        weights[3][1] = 0;
+    }
+
+    if (s.exist[0][7] != 0) {
+        weights[0][4]  = 0;
+        weights[0][5]  = 0;
+        weights[0][6]  = 0;
+        weights[1][4] = 0;
+        weights[1][5] = 0;
+        weights[1][6] = 0;
+        weights[1][7] = 0;
+        weights[2][5] = 0;
+        weights[2][6] = 0;
+        weights[2][7] = 0;
+        weights[3][6] = 0;
+        weights[3][7] = 0;
+    }
+
+    if (s.exist[7][0] != 0) {
+        weights[4][0] = 0;
+        weights[4][1] = 0;
+        weights[5][0] = 0;
+        weights[5][1] = 0;
+        weights[5][2] = 0;
+        weights[6][0] = 0;
+        weights[6][1] = 0;
+        weights[6][2] = 0;
+        weights[6][3] = 0;
+        weights[7][1] = 0;
+        weights[7][2] = 0;
+        weights[7][3] = 0;
+    }
+
+    if (s.exist[7][7] != 0) {
+        weights[4][6] = 0;
+        weights[4][7] = 0;
+        weights[5][5] = 0;
+        weights[5][6] = 0;
+        weights[5][7] = 0;
+        weights[6][4] = 0;
+        weights[6][5] = 0;
+        weights[6][6] = 0;
+        weights[6][7] = 0;
+        weights[7][4] = 0;
+        weights[7][5] = 0;
+        weights[7][6] = 0;
+}
+    for (int i=0; i<8; i++) {
+        for (int j=0; j<8; j++) {
+            result+=(!s.exist[i][j])? 0: (!s.pos[i][j])? 1*weights[i][j]: -1*weights[i][j];
+        }
+    }
+    return result;
+}
+
+float boss(const State& s) {
     float result=0;
     float weight[8][8]={{15.0, 1.0, 2.0, 1.5, 1.5, 2.0, 1.0, 15.0},
                         {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0},
@@ -127,7 +214,42 @@ float countResult_weighted(const State& s) {
             result+=(!s.exist[i][j])? 0: (!s.pos[i][j])? 1*weight[i][j]: -1*weight[i][j];
         }
     }
-    return result;
+    return result*(random(20000)+5000);
+}
+
+int corners(State& s, bool redTurn) {
+    int redC = ((s.exist[0][0] && s.pos[0][0])? 1: 0)
+              +((s.exist[0][0] && s.pos[0][0])? 1: 0)
+              +((s.exist[0][0] && s.pos[0][0])? 1: 0)
+              +((s.exist[0][0] && s.pos[0][0])? 1: 0);
+    int blueC = ((s.exist[0][0] && !s.pos[0][0])? 1: 0)
+              +((s.exist[0][0] && !s.pos[0][0])? 1: 0)
+              +((s.exist[0][0] && !s.pos[0][0])? 1: 0)
+              +((s.exist[0][0] && !s.pos[0][0])? 1: 0);
+    
+    if (redTurn) {
+        return 100 * (redC - blueC)
+            / (redC + blueC + 1);
+    }
+    else {
+        return 100 * (blueC - redC)
+            / (redC + blueC + 1);
+    }
+}
+
+double mobility(int rM, int bM, bool isRed) {
+    double m;
+    if (!isRed) {
+        int tmp=rM;
+        rM=bM;
+        bM=tmp;
+    }
+    if(rM > bM)
+        m = (100.0 * rM)/(rM + bM);
+    else if(rM < bM)
+        m = -(100.0 * bM)/(rM + bM);
+    else m = 0;
+    return m;
 }
 
 int availablePlaces(const State& s, bool (&available)[8][8], bool redTurn) {
@@ -188,27 +310,68 @@ int availablePlaces(const State& s, bool (&available)[8][8], bool redTurn) {
 
 }
 
-double heuristic(State& s) {
+double parity(State& s) {
+    int squaresRemaining = 64 - countDisks(s);
+    if (squaresRemaining % 2 == 0) {
+        return -1;
+    }
+    else {
+        return 1;
+    }
+}
+
+double heuristic(State& s, bool redTurn) {
     // Default heuristic
     bool available[8][8];
     int redMoves = availablePlaces(s, available, true);
     int blueMoves = availablePlaces(s, available, false);
+
+    int diff=abs(countResult(s));
+    int cnt=countDisks(s);
     
+    if (cnt <= 20) {
+        // Opening game
+        return 500*mobility(redMoves, blueMoves, redTurn)
+            + 2000*squareWeights(s)
+            + 1000*corners(s, redTurn)
+            + boss(s);
+           // + 10000*stability(s, color);
+    }
+    else if (cnt <= 58) {
+        // Midgame
+        return 100*diff
+            + 200*mobility(redMoves, blueMoves, redTurn)
+            + 100000*squareWeights(s)
+            + 1000*parity(s)
+            + 300000*corners(s, redTurn)
+            + boss(s);
+            //+ 10000*stability(board, color);
+    }
+    else {
+        // Endgame
+        return 500*diff
+            + 50000*parity(s)
+            + 10000*corners(s, redTurn)
+            + boss(s);
+            //+ 10000*stability(board, color);
+}
+    /*
     double h = 0;
+    
     
     double h1 = redMoves - blueMoves;
     double h2 = countResult_weighted(s);
     
     // TODO: design your heuristic function
-    /**** Write your code here ****/
+    /**** Write your code here ****
     randomSeed(millis());
     double weight1 = random(10000);
     double weight2 = random(10000)*3;
     h = weight1*h1 + weight2*h2;
     
-    /******************************/
+    /******************************
     
-    return h;
+    return h;*/
 }
 
 bool isEnd(const State& s) {
@@ -281,7 +444,7 @@ void printState(State& s, bool redTurn) {
     tft.setTextSize(2);
     tft.setCursor(10, 25);
     tft.print("h:");
-    tft.print(myToChars((int)(heuristic(s))));
+    tft.print(myToChars((int)(heuristic(s, redTurn))));
 
     tft.setCursor(10, 65);
     tft.setTextSize(2);

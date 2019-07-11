@@ -48,4 +48,3 @@ bool operator!= (const Step& s1, const Step& s2) {
 }
 
 #endif
-
