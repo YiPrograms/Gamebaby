@@ -88,7 +88,7 @@ void draw()
       tft.setCursor(16 + (boxsize * i), extray + 12 + (boxsize * j));
       tft.setTextSize(3);
       tft.setTextColor(ILI9341_WHITE);
-      if (button[j][i]=='B') tft.setCursor(16 + (boxsize * i), extray + 15 + (boxsize * j)), tft.setTextSize(2),tft.println("<-");
+      if (button[j][i]=='B') tft.setCursor(11 + (boxsize * i), extray + 15 + (boxsize * j)), tft.setTextSize(2),tft.println("<-");
       else if (button[j][i]=='M') tft.setCursor(7 + (boxsize * i), extray + 15 + (boxsize * j)), tft.setTextSize(2),tft.println("Mod");
       else tft.println(button[j][i]);
     }
@@ -101,6 +101,37 @@ void draw()
   tft.setTextSize(3);
   tft.setCursor(4,12);
 }
+
+template<typename T>
+struct stack {
+    T stk[100];
+    int tp=0;
+    void push(T k) {
+        stk[tp++]=k;
+        //Serial.print("Push! tp=");
+        //Serial.println(tp);
+        //Serial.print(" stk[tp-1]=");
+        ///Serial.println(stk[tp-1]);
+    }
+    bool empty() {
+        return tp==0;
+    }
+    void pop() {
+        if (tp>0) tp--;
+        //Serial.print("Pop! tp=");
+        //Serial.println(tp);
+    }
+    T top() {
+        //Serial.print("Top! tp=");
+        //Serial.print(tp);
+        //Serial.print(" stk[tp-1]=");
+        //Serial.println(stk[tp-1]);
+        return stk[tp-1];
+    }
+    void clear() {
+        tp=0;
+    }
+};
 
 void setup()
 {
@@ -115,41 +146,22 @@ void setup()
   tft.setRotation(3);
   draw();
   tft.setCursor(4, 12);
+
+  Serial.println("Stack test");
+  stack<char> sk;
+  sk.push('1');
+  sk.top();
+  sk.push('2');
+  sk.push('k');
+  sk.pop();
+  sk.top();
 }
 
 double str2dble(String & str) {
   return atof( str.c_str() );
 }
 
-struct stack {
-    char stk[100];
-    int tp=-1;
-    void push(char k) {
-        stk[++tp]=k;
-        Serial.print("Push! tp=");
-        Serial.println(tp);
-        Serial.print(" stk[tp]=");
-        Serial.println(stk[tp]);
-    }
-    bool empty() {
-        return tp==-1;
-    }
-    void pop() {
-        if (tp!=-1) tp--;
-        Serial.print("Pop! tp=");
-        Serial.println(tp);
-    }
-    char top() {
-        Serial.print("Top! tp=");
-        Serial.print(tp);
-        Serial.print(" stk[tp]=");
-        Serial.println(stk[tp]);
-        return stk[tp];
-    }
-    void clear() {
-        tp=-1;
-    }
-};
+
 
 String screen="";
 
@@ -203,14 +215,25 @@ void loop()
       tft.drawRoundRect(0, 0, 320, 48, 8, ILI9341_ORANGE);
       tft.setCursor(4, 12);
     } else if (lastchar == '=') {
-        calc(screen);
+        if (screen!="") {
+            answer=calc(screen);
+            tft.fillRoundRect(0, 0, 320, 48, 8, ILI9341_BLACK);
+            tft.drawRoundRect(0, 0, 320, 48, 8, ILI9341_ORANGE);
+            tft.setCursor(4, 12);
+            tft.print('=');
+            tft.print(answer);
+            equal=true;
+            screen="";
+        }
     } else if (lastchar == 'B') {
-        screen.remove(screen.length()-1);
-        tft.fillRoundRect(0, 0, 320, 48, 8, ILI9341_BLACK);
-        tft.drawRoundRect(0, 0, 320, 48, 8, ILI9341_ORANGE);
-        tft.setCursor(4, 12);
-        tft.print(screen);
-    } else {
+        if (screen.length()) {
+            screen.remove(screen.length()-1);
+            tft.fillRoundRect(0, 0, 320, 48, 8, ILI9341_BLACK);
+            tft.drawRoundRect(0, 0, 320, 48, 8, ILI9341_ORANGE);
+            tft.setCursor(4, 12);
+            tft.print(screen);
+        }
+    } else if (((extray + (boxsize * 4)) >= y) && (y >= extray)) {
         ps(lastchar);
     }
 /*
@@ -505,13 +528,11 @@ bool isop(char c) {
 }
 
 bool isdigit(char c) {
-        return !isop(c);
+    return !isop(c);
 }
 
-int order(char op)
-{
-    switch(op)
-    {
+int order(char op) {
+    switch(op) {
         case'(' :
             return -1;
             break;
@@ -519,32 +540,37 @@ int order(char op)
         case '-' :
             return 0;
             break;
-        default :// * / %
+        default :
             return 1;
     }
 }
 
 double calc(String s) {
-    Serial.println("Calc");
+    Serial.println("Calc "+s);
     vector<double> vd;
     String buffer="";
     for (int i=0; i<s.length(); i++) {
         if (s[i]=='-' && (i==0 || !(s[i]>='0' && s[i]<='9'))) buffer+='-';
         else if ((s[i]>='0' && s[i]<='9') || s[i]=='.') buffer+=s[i];
         else {
-            vd.push_back(str2dble(buffer));
+            if (buffer!="") {
+                vd.push_back(str2dble(buffer));
+                Serial.println(str2dble(buffer));
+                buffer="";
+            }
             vd.push_back(o2d(s[i]));
-            Serial.println(str2dble(buffer));
             Serial.println(o2d(s[i]));
-            buffer="";
         }
     }
-    vd.push_back(str2dble(buffer));
-    Serial.println(str2dble(buffer));
+    if (buffer!="") {
+          vd.push_back(str2dble(buffer));
+          Serial.println(str2dble(buffer));
+          buffer="";
+    }
     Serial.println("Parsing ok");
     
     vector<double> pofix;
-    stack opStack;
+    stack<char> opStack;
     for (int i=0; i<vd.size(); i++) {   
         char c=d2o(vd[i]);
         Serial.println(c);     
@@ -552,6 +578,8 @@ double calc(String s) {
         if(isdigit(c)) {
             pofix.push_back(db);
             Serial.println("Is digit"); 
+            Serial.print("Add! "); 
+            Serial.println(o2d(opStack.top())); 
         } else {
             switch(c) {
                 case '(' :
@@ -560,26 +588,30 @@ double calc(String s) {
                     break;
                 case ')' :
                     Serial.println("Is RBracket"); 
-                    while(opStack.top()!=o2d('(')) {
+                    while(opStack.top()!='(') {
                         pofix.push_back(o2d(opStack.top()));
+                        Serial.print("Add! "); 
+                        Serial.println(o2d(opStack.top())); 
                         opStack.pop();
-                    } 
+                    }
                     opStack.pop();
                     break;
                 case '+' : case'-' : case 'X' : case '/' : case '%':
                     Serial.println("Is operator"); 
                     if(!opStack.empty())
                         while(!opStack.empty() && order(opStack.top()) >= order(c)) {
-                            Serial.println("Pop "+opStack.top()); 
+                            //Serial.println("Pop "+opStack.top());
                             pofix.push_back(o2d(opStack.top()));
+                            Serial.print("Add! ");
+                            Serial.println(o2d(opStack.top()));
                             opStack.pop();
                         }
-                    Serial.print("Push "); 
-                    Serial.println(db); 
-                    opStack.push(db);
+                    //Serial.print("Push "); 
+                    //Serial.println(d2o(db)); 
+                    opStack.push(d2o(db));
                     break;
                 default : 
-                    Serial.println("NO!!");
+                    //Serial.println("NO!!");
                     break;
             }
         }           
@@ -592,4 +624,44 @@ double calc(String s) {
     }
 
     for (int i=0; i<pofix.size(); i++) Serial.println(pofix[i]);
+
+    stack<double> stk;
+    for (int i=0; i<pofix.size(); i++)  {
+        char c=d2o(pofix[i]);
+        double db=pofix[i];
+        if(isdigit(c)) {
+           stk.push(pofix[i]);
+        }
+        else {
+            double a, b;
+            switch(c) {
+            case '+' : 
+                b=stk.top(), stk.pop();
+                a=stk.top(), stk.pop();
+                stk.push(a+b);
+                break;
+            case '-' :
+                b=stk.top(), stk.pop();
+                a=stk.top(), stk.pop();
+                stk.push(a-b);
+                break;
+            case 'X' :
+                b=stk.top(), stk.pop();
+                a=stk.top(), stk.pop();
+                stk.push(a*b);
+                break;
+            case '/' : 
+                b=stk.top(), stk.pop();
+                a=stk.top(), stk.pop();
+                stk.push(a/b);
+                break;
+            case '%' : 
+                b=stk.top(), stk.pop();
+                a=stk.top(), stk.pop();
+                stk.push(a-floor(a/b)*b);
+                break;
+            }
+        }
+    }
+    return stk.top();
 }
