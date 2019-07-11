@@ -182,9 +182,9 @@ double heuristic(State& s) {
     
     // TODO: design your heuristic function
     /**** Write your code here ****/
-    // double weight1 = 0.5;
-    // double weight2 = 0.5;
-    // double h = weight1*h1 + weight2*h2;
+    double weight1 = 0.7;
+    double weight2 = 0.3;
+    h = weight1*h1 + weight2*h2;
     
     /******************************/
     

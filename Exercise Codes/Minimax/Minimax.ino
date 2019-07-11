@@ -803,20 +803,6 @@ double minimax(const State& s, int& mX, int& mY, bool redTurn, int depth, int al
 
     yield();
 
-    /* TODO: Design your efficient minimax function
-     * Functions you may use:
-
-     * availablePlaces(state, availables, redTurn): Count available moves & store in availables
-     * takeStep(state, i, j, redTurn): get state with step(i, j)
-     * heuristic(state): self-defined heuristic of the state
-     * isEnd(state): return true if state is end state
-
-     * Notes: 
-     * If depth == 1, return heuristic(s) directly.
-     * Take care of the situation that no available moves for the current redTurn: directly switch to !redTurn.
-     * If the current redTurn has no available step, you can trace !redTurn without decrease depth.
-     */
-
     // Generate next available places
     bool newAvailables[8][8];
     availablePlaces(s, newAvailables, redTurn);
@@ -824,33 +810,42 @@ double minimax(const State& s, int& mX, int& mY, bool redTurn, int depth, int al
 
     for (int i = 0; i < 8; ++i) {
         for (int j = 0; j < 8; ++j) {
-            // If position[i][j] is not available, do nothing
             if (!newAvailables[i][j])
                 continue;
-            // If Time's up, break search and set finish to true
+
             if (reachDeadline()) {
                 finish = true;
                 break;
             }
 
-            /* TODO:
-             * If cut off (depth <= 1) or reach end state, directly return heuristic of the state;
-             * use minimax to calculate heuristic of the state otherwise,
-             * and then compare current heuristic with best heuristic (bestHeu) 
-             * remember to update alpha and beta
-             */
-            /**** Write your code here ****/
-            
+            double h;
+            State newS = takeStep(s, i, j, redTurn);
+            if (depth <= 1 || isEnd(newS)) {
+                h = heuristic(newS);
+            } else {
+                int tempMX = -1, tempMY = -1;
+                h = minimax(newS, tempMX, tempMY, !redTurn, depth - 1, alpha, beta);
+            }
 
-            /******************************/
+            if (mX == -1 || (redTurn && h > bestHeu) || (!redTurn && h < bestHeu)) {
+                mX = i;
+                mY = j;
+                bestHeu = h;
+                if (redTurn && bestHeu > alpha)
+                    alpha = bestHeu;
+                else if (!redTurn && bestHeu < beta)
+                    beta = bestHeu;
+
+
+                if (alpha >= beta)
+                    finish = true;
+            }
             if (finish)
                 break;
         }
-
         if (finish)
             break;
     }
-
     if (mX == -1 && reachDeadline() == false) {
         int tempMX = -1, tempMY = -1;
         bestHeu = minimax(s, tempMX, tempMY, !redTurn, depth);
@@ -858,3 +853,4 @@ double minimax(const State& s, int& mX, int& mY, bool redTurn, int depth, int al
 
     return bestHeu;
 }
+
