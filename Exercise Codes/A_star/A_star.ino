@@ -433,9 +433,9 @@ int A_star_search(State state, int cutoff, vector<Step>& steps) {
         yield();
         // TODO: Pop state from frontier & update explored and frontier
         /**** Write your code here ****/
-
-
-
+         State s=frontier.top();
+         frontier.pop();
+         explored.push(s);
         /******************************/
 
         // Case 1: If current state is goal state, trace back all steps
@@ -472,18 +472,18 @@ int A_star_search(State state, int cutoff, vector<Step>& steps) {
                  * i.e. state1 < state2 returns true if state1's f is smaller than state2's f
                  */
                 /**** Write your code here ****/
-
-
-
-
+                if (successor<frontier.getState(successor)) {
+                    prevStep.update(successor, step);
+                    frontier.update(successor);
+                }
                 /******************************/
             } else {
                 /* TODO
                  * Add successor in frontier, update frontier and prevStep
                  */
                 /**** Write your code here ****/
-
-
+                prevStep.update(successor, step);
+                frontier.push(successor);
                 /******************************/
             }
         }
