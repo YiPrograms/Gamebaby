@@ -121,20 +121,29 @@ double str2dble(String & str) {
   return atof( str.c_str() );
 }
 
-template<typename T>
 struct stack {
-    T stk[100];
+    char stk[100];
     int tp=-1;
-    void push(T k) {
+    void push(char k) {
         stk[++tp]=k;
+        Serial.print("Push! tp=");
+        Serial.println(tp);
+        Serial.print(" stk[tp]=");
+        Serial.println(stk[tp]);
     }
     bool empty() {
         return tp==-1;
     }
     void pop() {
-        if (!(this->empty())) tp--;
+        if (tp!=-1) tp--;
+        Serial.print("Pop! tp=");
+        Serial.println(tp);
     }
-    T top() {
+    char top() {
+        Serial.print("Top! tp=");
+        Serial.print(tp);
+        Serial.print(" stk[tp]=");
+        Serial.println(stk[tp]);
         return stk[tp];
     }
     void clear() {
@@ -155,9 +164,7 @@ void ps(char s) {
 
 
 
-bool isop(double db) {
-    return db==-7.122 || db==-8.122 || db==-9.122 || db==-10.122;
-}
+
 
 void loop()
 {
@@ -467,64 +474,58 @@ char idbutton()
   }
 }
 
-double op2dble(char op) {
-    if (op=='+') return -7.122;
-    if (op=='-') return -8.122;
-    if (op=='X') return -9.122;
-    if (op=='/') return -10.122;
-    if (op=='%') return -11.122;
+double o2d(char op) {
+    if (op=='+') return 0.7122;
+    if (op=='-') return 1.7122;
+    if (op=='X') return 2.7122;
+    if (op=='/') return 3.7122;
+    if (op=='%') return 4.7122;
+    if (op=='(') return 5.7122;
+    if (op==')') return 6.7122;
+    return 7.7122;
 }
 
-char dble2op(double op) {
-    if (op==-7.122) return '+';
-    if (op==-8.122) return '-';
-    if (op==-9.122) return 'X';
-    if (op==-10.122) return '/';
-    if (op==-11.122) return '%';
+char d2o(double op) {
+    if (op==0.7122) return '+';
+    if (op==1.7122) return '-';
+    if (op==2.7122) return 'X';
+    if (op==3.7122) return '/';
+    if (op==4.7122) return '%';
+    if (op==5.7122) return '(';
+    if (op==6.7122) return ')';
     return 'F';
 }
 
-int priority(char op) { 
-    switch(op) { 
-        case '+': case '-': return 1;
-        case 'X': case '/': case '%':  return 2;
-        default:            return 0;
-    } 
-} 
+bool isop(double db) {
+    return db==0.7122 || db==1.7122 || db==2.7122 || db==3.7122 || db==4.7122 || db==5.7122 || db==6.7122;
+}
+bool isop(char c) {
+    double db=o2d(c);
+    return isop(db);
+}
 
-String inToPostfix(vector<double> &s) { 
-        stack<double> stk;
-        String postfix;
-    for(int i = 0; i<s.size(); i++) 
-        switch(dble2op(s[i])) { 
-        case '(':
-        stk.push(op2dble('('));
-            break; 
-        case '+': case '-': case 'X': case '/': case '%':
-            while(priority(dble2op(stk.top())) >= priority(s[i])) { 
-                postfix+= dble2op(stk.top());
-                stk.pop();
-            } 
-            stk.push(op2dble('('));
-            break; 
-        case ')': 
-            while(dble2op(stk.top()) != '(') {
-                postfix+= dble2op(stk.top());
-                stk.pop();
-            } 
-            stk.pop();
-            break; 
-        default:
-            postfix+= s[i];
+bool isdigit(char c) {
+        return !isop(c);
+}
+
+int order(char op)
+{
+    switch(op)
+    {
+        case'(' :
+            return -1;
+            break;
+        case '+' :
+        case '-' :
+            return 0;
+            break;
+        default :// * / %
+            return 1;
     }
-    while(!stk.empty()) { 
-        postfix+= dble2op(stk.top());
-        stk.pop();
-    }
-    return postfix;
-} 
+}
 
 double calc(String s) {
+    Serial.println("Calc");
     vector<double> vd;
     String buffer="";
     for (int i=0; i<s.length(); i++) {
@@ -532,10 +533,63 @@ double calc(String s) {
         else if ((s[i]>='0' && s[i]<='9') || s[i]=='.') buffer+=s[i];
         else {
             vd.push_back(str2dble(buffer));
-            vd.push_back(op2dble(s[i]));
+            vd.push_back(o2d(s[i]));
+            Serial.println(str2dble(buffer));
+            Serial.println(o2d(s[i]));
+            buffer="";
         }
     }
     vd.push_back(str2dble(buffer));
-    String post=inToPostfix(vd);
-    Serial.println(post);
+    Serial.println(str2dble(buffer));
+    Serial.println("Parsing ok");
+    
+    vector<double> pofix;
+    stack opStack;
+    for (int i=0; i<vd.size(); i++) {   
+        char c=d2o(vd[i]);
+        Serial.println(c);     
+        double db=vd[i];  
+        if(isdigit(c)) {
+            pofix.push_back(db);
+            Serial.println("Is digit"); 
+        } else {
+            switch(c) {
+                case '(' :
+                    Serial.println("Is LBracket"); 
+                    opStack.push('(');
+                    break;
+                case ')' :
+                    Serial.println("Is RBracket"); 
+                    while(opStack.top()!=o2d('(')) {
+                        pofix.push_back(o2d(opStack.top()));
+                        opStack.pop();
+                    } 
+                    opStack.pop();
+                    break;
+                case '+' : case'-' : case 'X' : case '/' : case '%':
+                    Serial.println("Is operator"); 
+                    if(!opStack.empty())
+                        while(!opStack.empty() && order(opStack.top()) >= order(c)) {
+                            Serial.println("Pop "+opStack.top()); 
+                            pofix.push_back(o2d(opStack.top()));
+                            opStack.pop();
+                        }
+                    Serial.print("Push "); 
+                    Serial.println(db); 
+                    opStack.push(db);
+                    break;
+                default : 
+                    Serial.println("NO!!");
+                    break;
+            }
+        }           
+    }
+    Serial.println("Read finish"); 
+    while(!opStack.empty()) {
+        Serial.println("Popping remaining");
+        pofix.push_back(o2d(opStack.top()));
+        opStack.pop();          
+    }
+
+    for (int i=0; i<pofix.size(); i++) Serial.println(pofix[i]);
 }
