@@ -550,7 +550,7 @@ double calc(String s) {
     vector<double> vd;
     String buffer="";
     for (int i=0; i<s.length(); i++) {
-        if (s[i]=='-' && (i==0 || !(s[i]>='0' && s[i]<='9'))) buffer+='-';
+        if (s[i]=='-' && (i==0 || !(s[i-1]>='0' && s[i-1]<='9'))) buffer+='-';
         else if ((s[i]>='0' && s[i]<='9') || s[i]=='.') buffer+=s[i];
         else {
             if (buffer!="") {
