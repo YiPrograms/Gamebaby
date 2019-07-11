@@ -214,7 +214,7 @@ float boss(const State& s) {
             result+=(!s.exist[i][j])? 0: (!s.pos[i][j])? 1*weight[i][j]: -1*weight[i][j];
         }
     }
-    return result*(random(20000)+5000);
+    return result*(random(1000)+200);
 }
 
 int corners(State& s, bool redTurn) {
@@ -332,19 +332,19 @@ double heuristic(State& s, bool redTurn) {
     if (cnt <= 20) {
         // Opening game
         return 500*mobility(redMoves, blueMoves, redTurn)
-            + 2000*squareWeights(s)
+            + 10000*squareWeights(s)
             + 1000*corners(s, redTurn)
-            + boss(s);
+            + 100*boss(s);
            // + 10000*stability(s, color);
     }
     else if (cnt <= 58) {
         // Midgame
         return 100*diff
             + 200*mobility(redMoves, blueMoves, redTurn)
-            + 100000*squareWeights(s)
+            + 30000*squareWeights(s)
             + 1000*parity(s)
-            + 300000*corners(s, redTurn)
-            + boss(s);
+            + 10000*corners(s, redTurn)
+            + 90*boss(s);
             //+ 10000*stability(board, color);
     }
     else {
@@ -352,7 +352,7 @@ double heuristic(State& s, bool redTurn) {
         return 500*diff
             + 50000*parity(s)
             + 10000*corners(s, redTurn)
-            + boss(s);
+            + 100*boss(s);
             //+ 10000*stability(board, color);
 }
     /*
