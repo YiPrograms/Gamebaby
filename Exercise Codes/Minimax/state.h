@@ -111,6 +111,25 @@ int countResult(const State& s) {
     return result;
 }
 
+/// Boss code
+float countResult_weighted(const State& s) {
+    float result=0;
+    float weight[8][8]={{15.0, 1.0, 2.0, 1.5, 1.5, 2.0, 1.0, 15.0},
+                        {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0},
+                        {2.0, 1.0, 1.2, 1.0, 1.0, 1.2, 1.0, 2.0},
+                        {1.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.5},
+                        {1.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.5},
+                        {2.0, 1.0, 1.2, 1.0, 1.0, 1.2, 1.0, 2.0},
+                        {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0},
+                        {15.0, 1.0, 2.0, 1.5, 1.5, 2.0, 1.0, 15.0}};
+    for (int i=0; i<8; i++) {
+        for (int j=0; j<8; j++) {
+            result+=(!s.exist[i][j])? 0: (!s.pos[i][j])? 1*weight[i][j]: -1*weight[i][j];
+        }
+    }
+    return result;
+}
+
 int availablePlaces(const State& s, bool (&available)[8][8], bool redTurn) {
 
     bool currentC = redTurn ? false : true;
@@ -178,12 +197,13 @@ double heuristic(State& s) {
     double h = 0;
     
     double h1 = redMoves - blueMoves;
-    double h2 = countResult(s);
+    double h2 = countResult_weighted(s);
     
     // TODO: design your heuristic function
     /**** Write your code here ****/
-    double weight1 = 0.7;
-    double weight2 = 0.3;
+    randomSeed(millis());
+    double weight1 = random(10000);
+    double weight2 = random(10000)*3;
     h = weight1*h1 + weight2*h2;
     
     /******************************/
