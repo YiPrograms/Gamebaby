@@ -344,7 +344,7 @@ double heuristic(State& s, bool redTurn) {
             //+ 30000*squareWeights(s)
             + 1000*parity(s)
             + 1000*corners(s, redTurn)
-            + 200*boss(s);
+            + 400*boss(s);
             //+ 10000*stability(board, color);
     }
     else {
