@@ -285,7 +285,7 @@ void loop()
       {
         equal = true;
         Serial.println("Calculate");
-        if (key2.toInt() == 0 && operation == '/')
+        if (str2dble(key2) == 0.0 && operation == '/')
         {
           tft.setCursor(4, 12);
           tft.fillRoundRect(0, 0, 320, 48, 8, ILI9341_BLACK);

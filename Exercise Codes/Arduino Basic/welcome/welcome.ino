@@ -162,16 +162,7 @@ void setup() {
   yield();
   tft.setCursor(10,10);
   tft.print("CHANG YU SHUO");
-  /*for (int thisNote = 0; thisNote < sizeof(melody) / sizeof(melody[0]); thisNote++) {
-
-    int noteDuration = 1000/noteDurations[thisNote];
-    tone(D1, melody[thisNote],noteDuration);
-
-    int pauseBetweenNotes = noteDuration * 1.30;
-    delay(pauseBetweenNotes);
-    
-    noTone(D1); //stop the tone playing:
-}*/
+  
  }
 
 int r=0;
@@ -187,6 +178,20 @@ void loop() {
   tft.setCursor(130,90);
   tft.setTextSize(2);
   tft.print("NTUEE");*/
+
+  
+  /*for (int thisNote = 0; thisNote < sizeof(melody) / sizeof(melody[0]); thisNote++) {
+
+    int noteDuration = 1000/noteDurations[thisNote];
+    tone(D1, melody[thisNote],noteDuration);
+
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    
+    noTone(D1);
+  }*/
+
+  
   randomSeed(millis());
   now=random(3);
     if (now==0) if (rd) r++; else r--;
