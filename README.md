@@ -25,3 +25,6 @@ Date: 2019 7/8~7/12
 - TFT Touchscreen
 - Battery & Power module
 - 3D Printed Case
+
+
+
